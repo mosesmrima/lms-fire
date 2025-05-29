@@ -2,13 +2,12 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Card, CardBody, CardHeader } from "@heroui/react"
+import { Card, CardBody, CardHeader, addToast } from "@heroui/react"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useCourses } from "@/hooks/queries/use-courses"
 import { useCourseProgress } from "@/hooks/queries/use-progress"
 import { EnrolledCoursesList } from "@/components/enrolled-courses-list"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import { toast } from "sonner"
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -18,7 +17,12 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      toast.error("Please log in to access your dashboard")
+      addToast({
+        title: "Authentication Required",
+        description: "Please log in to access your dashboard",
+        timeout: 3000,
+        shouldShowTimeoutProgress: true
+      })
       router.push("/login")
     }
   }, [user, authLoading, router])
@@ -86,7 +90,7 @@ export default function DashboardPage() {
       </div>
 
       <h2 className="text-2xl font-bold mb-6">Your Courses</h2>
-          <EnrolledCoursesList />
+      <EnrolledCoursesList />
     </div>
   )
 }

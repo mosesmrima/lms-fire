@@ -3,9 +3,8 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Button, Input } from "@heroui/react"
+import { Button, Input, addToast } from "@heroui/react"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import { toast } from "sonner"
 import { sendPasswordResetRequest } from "@/lib/firebase"
 import { ArrowLeft, CheckCircle } from "lucide-react"
 import Link from "next/link"
@@ -22,10 +21,20 @@ export function ForgotPasswordForm() {
     try {
       await sendPasswordResetRequest(email)
       setIsSuccess(true)
-      toast.success("Password reset email sent!")
+      addToast({
+        title: "Success",
+        description: "Password reset email sent!",
+        timeout: 3000,
+        shouldShowTimeoutProgress: true
+      })
     } catch (error: any) {
       console.error("Password reset error:", error)
-      toast.error(error.message || "Failed to send reset email. Please try again.")
+      addToast({
+        title: "Error",
+        description: error.message || "Failed to send reset email. Please try again.",
+        timeout: 3000,
+        shouldShowTimeoutProgress: true
+      })
     } finally {
       setIsSubmitting(false)
     }

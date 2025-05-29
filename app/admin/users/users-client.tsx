@@ -16,7 +16,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-import { useAuth } from "@/contexts/auth-context"
+import { useAuthStore } from "@/lib/stores/auth-store"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { UserRoleDialog } from "@/components/admin/user-role-dialog"
 import { Search, ChevronDown, MoreVertical, ArrowLeft } from "lucide-react"
@@ -159,12 +159,12 @@ export default function UsersClient() {
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
 
-  const { user, userRole } = useAuth()
+  const { user, isAdmin } = useAuthStore()
   const router = useRouter()
 
   useEffect(() => {
     // Check if user is admin
-    if (userRole !== "admin") {
+    if (!isAdmin) {
       router.push("/access-denied")
       return
     }
@@ -199,7 +199,7 @@ export default function UsersClient() {
     }
 
     fetchUsers()
-  }, [userRole, router])
+  }, [isAdmin, router])
 
   useEffect(() => {
     let filtered = [...users]
