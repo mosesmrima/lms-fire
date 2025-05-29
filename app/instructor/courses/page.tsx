@@ -9,9 +9,9 @@ export default function InstructorCoursesPage() {
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold">My Courses</h1>
-        <Button asChild>
-          <Link href="/instructor/courses/new">Create New Course</Link>
-        </Button>
+        <Link href="/instructor/courses/new">
+          <Button color="primary">Create New Course</Button>
+        </Link>
       </div>
       <InstructorCoursesList />
     </div>
