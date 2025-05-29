@@ -1,18 +1,24 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { User, Lock, Bell } from "lucide-react"
-import ProfileForm from "@/components/profile-form"
 import { LoadingSpinner } from "@/components/loading-spinner"
+import { Button, Input, addToast } from "@heroui/react"
+import { useAuthStore } from "@/lib/stores/auth-store"
+import { useUserMutations } from "@/lib/services/user-service"
 
 export default function ProfileClient() {
-  const { user, loading } = useAuth()
   const router = useRouter()
+  const { user, loading } = useAuthStore()
   const [mounted, setMounted] = useState(false)
+  const { updateUser, isUpdating } = useUserMutations()
+  const [formData, setFormData] = useState({
+    displayName: user?.displayName || "",
+    email: user?.email || ""
+  })
 
   useEffect(() => {
     setMounted(true)
@@ -23,6 +29,33 @@ export default function ProfileClient() {
       router.push("/signin?redirect=/profile")
     }
   }, [mounted, loading, user, router])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user) return
+
+    try {
+      await updateUser({
+        userId: user.uid,
+        userData: formData
+      })
+
+      addToast({
+        title: "Success",
+        description: "Profile updated successfully",
+        timeout: 3000,
+        shouldShowTimeoutProgress: true
+      })
+    } catch (error) {
+      console.error("Error updating profile:", error)
+      addToast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        timeout: 3000,
+        shouldShowTimeoutProgress: true
+      })
+    }
+  }
 
   if (!mounted || loading) {
     return (
@@ -96,7 +129,34 @@ export default function ProfileClient() {
                   <CardDescription>Update your personal information</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ProfileForm user={user} />
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label htmlFor="displayName" className="block text-sm font-medium mb-1">
+                        Display Name
+                      </label>
+                      <Input
+                        id="displayName"
+                        value={formData.displayName}
+                        onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium mb-1">
+                        Email
+                      </label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <Button type="submit" isLoading={isUpdating}>
+                      Update Profile
+                    </Button>
+                  </form>
                 </CardContent>
               </Card>
             </TabsContent>
