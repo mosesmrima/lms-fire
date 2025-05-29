@@ -22,7 +22,7 @@ import { UserRoleDialog } from "@/components/admin/user-role-dialog"
 import { Search, ChevronDown, MoreVertical, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { User } from "@/components/ui/user"
-import { Chip } from "@/components/ui/chip"
+import { Chip } from "@heroui/react"
 import { Dropdown } from "@/components/ui/dropdown"
 
 // Mock user data

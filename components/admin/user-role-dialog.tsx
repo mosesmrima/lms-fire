@@ -1,18 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { LoadingSpinner } from "@/components/loading-spinner"
-import { useAuth } from "@/contexts/auth-context"
+import { Modal, Button, Select } from "@heroui/react"
+import { useAuthStore } from "@/lib/stores/auth-store"
 
 interface UserRoleDialogProps {
   isOpen: boolean
@@ -30,7 +20,7 @@ export function UserRoleDialog({ isOpen, onClose, user, onRoleChange }: UserRole
   const [selectedRole, setSelectedRole] = useState(user.role || "student")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { user: currentUser } = useAuth()
+  const { user: currentUser } = useAuthStore()
 
   const handleRoleChange = async () => {
     if (!currentUser) return
@@ -75,34 +65,33 @@ export function UserRoleDialog({ isOpen, onClose, user, onRoleChange }: UserRole
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Change User Role</DialogTitle>
-          <DialogDescription>Update the role for {user.displayName || user.email}</DialogDescription>
-        </DialogHeader>
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <div className="p-6 max-w-[425px]">
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold">Change User Role</h2>
+          <p className="text-gray-400 mt-1">Update the role for {user.displayName || user.email}</p>
+        </div>
         <div className="py-4">
-          <Select value={selectedRole} onValueChange={setSelectedRole}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="student">Student</SelectItem>
-              <SelectItem value="instructor">Instructor</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-            </SelectContent>
+          <Select
+            value={selectedRole}
+            onChange={(e) => setSelectedRole(e.target.value)}
+            className="w-full"
+          >
+            <option value="student">Student</option>
+            <option value="instructor">Instructor</option>
+            <option value="admin">Admin</option>
           </Select>
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+        <div className="flex justify-end gap-2">
+          <Button variant="light" onPress={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleRoleChange} disabled={isLoading}>
-            {isLoading ? <LoadingSpinner size="sm" /> : "Save Changes"}
+          <Button onPress={handleRoleChange} isLoading={isLoading}>
+            Save Changes
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+    </Modal>
   )
 }

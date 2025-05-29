@@ -1,15 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardBody, Button, Textarea, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@heroui/react"
+import { Card, CardBody, Button, Textarea, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, addToast } from "@heroui/react"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useNotes } from "@/lib/services/note-service"
 import { useNoteMutations } from "@/lib/services/note-service"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import { toast } from "sonner"
-import { Plus, Edit2, Trash2, X } from "lucide-react"
+import { Plus, Edit2, Trash2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
-
 
 interface NotesListProps {
   courseId: string
@@ -57,7 +55,12 @@ export function NotesList({ courseId, lessonId }: NotesListProps) {
             updatedAt: new Date()
           }
         })
-        toast.success("Note updated successfully")
+        addToast({
+          title: "Success",
+          description: "Note updated successfully",
+          timeout: 3000,
+          shouldShowTimeoutProgress: true
+        })
       } else {
         console.log("Creating new note")
         await createNote({
@@ -69,12 +72,22 @@ export function NotesList({ courseId, lessonId }: NotesListProps) {
             createdAt: new Date()
           }
         })
-        toast.success("Note created successfully")
+        addToast({
+          title: "Success",
+          description: "Note created successfully",
+          timeout: 3000,
+          shouldShowTimeoutProgress: true
+        })
       }
       handleCloseModal()
     } catch (error) {
       console.error("Error saving note:", error)
-      toast.error(editingNoteId ? "Failed to update note" : "Failed to create note")
+      addToast({
+        title: "Error",
+        description: editingNoteId ? "Failed to update note" : "Failed to create note",
+        timeout: 3000,
+        shouldShowTimeoutProgress: true
+      })
     }
   }
 
@@ -83,10 +96,20 @@ export function NotesList({ courseId, lessonId }: NotesListProps) {
       console.log("Deleting note:", noteId)
       setDeletingNoteId(noteId)
       await deleteNote(noteId)
-      toast.success("Note deleted successfully")
+      addToast({
+        title: "Success",
+        description: "Note deleted successfully",
+        timeout: 3000,
+        shouldShowTimeoutProgress: true
+      })
     } catch (error) {
       console.error("Error deleting note:", error)
-      toast.error("Failed to delete note")
+      addToast({
+        title: "Error",
+        description: "Failed to delete note",
+        timeout: 3000,
+        shouldShowTimeoutProgress: true
+      })
     } finally {
       setDeletingNoteId(null)
     }
@@ -122,7 +145,7 @@ export function NotesList({ courseId, lessonId }: NotesListProps) {
           {filteredNotes.map((note) => (
             <Card 
               key={note.id} 
-              className="group  transition-all duration-200"
+              className="group transition-all duration-200"
             >
               <CardBody className="p-4">
                 <div className="flex justify-between items-start mb-3">
