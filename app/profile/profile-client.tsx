@@ -2,13 +2,12 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Tabs, Tab } from "@heroui/react"
+import { Card, CardBody, CardHeader, CardFooter, Spinner } from "@heroui/react"
 import { User, Lock, Bell } from "lucide-react"
-import { LoadingSpinner } from "@/components/loading-spinner"
 import { Button, Input, addToast } from "@heroui/react"
 import { useAuthStore } from "@/lib/stores/auth-store"
-import { useUserMutations } from "@/lib/services/user-service"
+import { useUserMutations } from "@/hooks/queries/use-users"
 
 export default function ProfileClient() {
   const router = useRouter()
@@ -60,7 +59,7 @@ export default function ProfileClient() {
   if (!mounted || loading) {
     return (
       <div className="flex justify-center items-center min-h-[70vh]">
-        <LoadingSpinner size="lg" />
+        <Spinner size="lg" />
       </div>
     )
   }
@@ -77,10 +76,10 @@ export default function ProfileClient() {
         <div className="md:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle>Profile Picture</CardTitle>
-              <CardDescription>Manage your profile image</CardDescription>
+              <h3 className="text-xl font-semibold">Profile Picture</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Manage your profile image</p>
             </CardHeader>
-            <CardContent className="flex flex-col items-center">
+            <CardBody className="flex flex-col items-center">
               <div className="w-32 h-32 rounded-full bg-muted flex items-center justify-center overflow-hidden mb-4">
                 {user.photoURL ? (
                   <img
@@ -95,40 +94,27 @@ export default function ProfileClient() {
                 )}
               </div>
               <p className="text-sm text-muted-foreground mb-2">{user.displayName || user.email?.split("@")[0]}</p>
-            </CardContent>
+            </CardBody>
           </Card>
         </div>
 
         <div className="md:col-span-3">
-          <Tabs defaultValue="general" className="w-full">
-            <TabsList className="mb-6 w-full">
-              <TabsTrigger value="general" className="flex-1">
+          <Tabs aria-label="Profile Settings" className="w-full">
+            <Tab
+              key="general"
+              title={
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4" />
                   <span>General</span>
                 </div>
-              </TabsTrigger>
-              <TabsTrigger value="security" className="flex-1">
-                <div className="flex items-center gap-2">
-                  <Lock className="h-4 w-4" />
-                  <span>Security</span>
-                </div>
-              </TabsTrigger>
-              <TabsTrigger value="notifications" className="flex-1">
-                <div className="flex items-center gap-2">
-                  <Bell className="h-4 w-4" />
-                  <span>Notifications</span>
-                </div>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="general">
+              }
+            >
               <Card>
                 <CardHeader>
-                  <CardTitle>General Information</CardTitle>
-                  <CardDescription>Update your personal information</CardDescription>
+                  <h3 className="text-xl font-semibold">General Information</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Update your personal information</p>
                 </CardHeader>
-                <CardContent>
+                <CardBody>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                       <label htmlFor="displayName" className="block text-sm font-medium mb-1">
@@ -157,39 +143,55 @@ export default function ProfileClient() {
                       Update Profile
                     </Button>
                   </form>
-                </CardContent>
+                </CardBody>
               </Card>
-            </TabsContent>
+            </Tab>
 
-            <TabsContent value="security">
+            <Tab
+              key="security"
+              title={
+                <div className="flex items-center gap-2">
+                  <Lock className="h-4 w-4" />
+                  <span>Security</span>
+                </div>
+              }
+            >
               <Card>
                 <CardHeader>
-                  <CardTitle>Security Settings</CardTitle>
-                  <CardDescription>Manage your account security</CardDescription>
+                  <h3 className="text-xl font-semibold">Security Settings</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Manage your account security</p>
                 </CardHeader>
-                <CardContent>
+                <CardBody>
                   <p className="text-muted-foreground mb-4">
                     Security settings will be available in a future update. Here you will be able to change your
                     password, enable two-factor authentication, and manage connected accounts.
                   </p>
-                </CardContent>
+                </CardBody>
               </Card>
-            </TabsContent>
+            </Tab>
 
-            <TabsContent value="notifications">
+            <Tab
+              key="notifications"
+              title={
+                <div className="flex items-center gap-2">
+                  <Bell className="h-4 w-4" />
+                  <span>Notifications</span>
+                </div>
+              }
+            >
               <Card>
                 <CardHeader>
-                  <CardTitle>Notification Preferences</CardTitle>
-                  <CardDescription>Customize your notification settings</CardDescription>
+                  <h3 className="text-xl font-semibold">Notification Preferences</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Customize your notification settings</p>
                 </CardHeader>
-                <CardContent>
+                <CardBody>
                   <p className="text-muted-foreground mb-4">
                     Notification settings will be available in a future update. Here you will be able to customize email
                     notifications, in-app alerts, and communication preferences.
                   </p>
-                </CardContent>
+                </CardBody>
               </Card>
-            </TabsContent>
+            </Tab>
           </Tabs>
         </div>
       </div>

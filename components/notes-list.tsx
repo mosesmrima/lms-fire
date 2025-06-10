@@ -1,17 +1,19 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardBody, Button, Textarea, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, addToast } from "@heroui/react"
+import { useForm } from "react-hook-form"
+import { Button, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Textarea, addToast } from "@heroui/react"
 import { useAuthStore } from "@/lib/stores/auth-store"
-import { useNotes } from "@/lib/services/note-service"
-import { useNoteMutations } from "@/lib/services/note-service"
-import { LoadingSpinner } from "@/components/loading-spinner"
-import { Plus, Edit2, Trash2 } from "lucide-react"
-import { formatDistanceToNow } from "date-fns"
+import { useNotes, useNoteMutations } from "@/hooks/queries/use-notes"
+import { Trash2, Edit2 } from "lucide-react"
 
 interface NotesListProps {
   courseId: string
   lessonId: string
+}
+
+interface NoteFormData {
+  content: string
 }
 
 export function NotesList({ courseId, lessonId }: NotesListProps) {
@@ -20,39 +22,39 @@ export function NotesList({ courseId, lessonId }: NotesListProps) {
   const { createNote, updateNote, deleteNote, isCreating, isUpdating, isDeleting } = useNoteMutations()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
-  const [noteContent, setNoteContent] = useState("")
   const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null)
 
+  const { register, handleSubmit, reset, setValue } = useForm<NoteFormData>()
+
   const handleOpenModal = (noteId?: string, content?: string) => {
-    console.log("Opening modal:", { noteId, content })
     if (noteId && content) {
       setEditingNoteId(noteId)
-      setNoteContent(content)
+      setValue("content", content)
     } else {
       setEditingNoteId(null)
-      setNoteContent("")
+      reset()
     }
     setIsModalOpen(true)
   }
 
   const handleCloseModal = () => {
-    console.log("Closing modal")
     setIsModalOpen(false)
     setEditingNoteId(null)
-    setNoteContent("")
+    reset()
   }
 
-  const handleSaveNote = async () => {
-    if (!user || !noteContent.trim()) return
+  const onSubmit = async (data: NoteFormData) => {
+    if (!user) return
 
     try {
       if (editingNoteId) {
-        console.log("Updating note:", editingNoteId)
         await updateNote({
           noteId: editingNoteId,
           noteData: {
-            content: noteContent,
-            updatedAt: new Date()
+            content: data.content,
+            userId: user.uid,
+            courseId,
+            lessonId
           }
         })
         addToast({
@@ -62,14 +64,12 @@ export function NotesList({ courseId, lessonId }: NotesListProps) {
           shouldShowTimeoutProgress: true
         })
       } else {
-        console.log("Creating new note")
         await createNote({
           userId: user.uid,
           noteData: {
-            content: noteContent,
+            content: data.content,
             courseId,
-            lessonId,
-            createdAt: new Date()
+            lessonId
           }
         })
         addToast({
@@ -84,18 +84,17 @@ export function NotesList({ courseId, lessonId }: NotesListProps) {
       console.error("Error saving note:", error)
       addToast({
         title: "Error",
-        description: editingNoteId ? "Failed to update note" : "Failed to create note",
+        description: "Failed to save note. Please try again.",
         timeout: 3000,
         shouldShowTimeoutProgress: true
       })
     }
   }
 
-  const handleDeleteNote = async (noteId: string) => {
+  const handleDelete = async (noteId: string) => {
     try {
-      console.log("Deleting note:", noteId)
-      setDeletingNoteId(noteId)
       await deleteNote(noteId)
+      setDeletingNoteId(null)
       addToast({
         title: "Success",
         description: "Note deleted successfully",
@@ -106,126 +105,122 @@ export function NotesList({ courseId, lessonId }: NotesListProps) {
       console.error("Error deleting note:", error)
       addToast({
         title: "Error",
-        description: "Failed to delete note",
+        description: "Failed to delete note. Please try again.",
         timeout: 3000,
         shouldShowTimeoutProgress: true
       })
-    } finally {
-      setDeletingNoteId(null)
     }
   }
 
   if (isLoading) {
-    return <LoadingSpinner />
+    return <div>Loading notes...</div>
   }
 
-  const filteredNotes = notes?.filter(
-    note => note.courseId === courseId && note.lessonId === lessonId
-  ) || []
+  const filteredNotes = notes?.filter(note => note.lessonId === lessonId) || []
 
   return (
-    <div className="relative min-h-[200px]">
-      {/* Header with Add Note Button */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Notes</h2>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Notes</h3>
         <Button
-          color="primary"
+          size="sm"
           onPress={() => handleOpenModal()}
-          className="bg-[#f90026] hover:bg-[#d10021]"
-          disabled={isCreating || isUpdating || isDeleting}
+          isLoading={isCreating}
         >
-          <Plus className="h-4 w-4 mr-2" />
           Add Note
         </Button>
       </div>
 
-      {/* Notes Grid */}
-      {filteredNotes.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredNotes.map((note) => (
-            <Card 
-              key={note.id} 
-              className="group transition-all duration-200"
-            >
-              <CardBody className="p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <span className="text-xs text-gray-400">
-                    {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}
-                  </span>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 w-8 p-0 hover:bg-[#f90026]/10"
-                      onPress={() => handleOpenModal(note.id, note.content)}
-                      disabled={isUpdating || isDeleting}
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 w-8 p-0 hover:bg-[#f90026]/10"
-                      onPress={() => handleDeleteNote(note.id)}
-                      disabled={isUpdating || isDeleting}
-                      isLoading={deletingNoteId === note.id}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-200 whitespace-pre-wrap">{note.content}</p>
-              </CardBody>
-            </Card>
-          ))}
-        </div>
+      {filteredNotes.length === 0 ? (
+        <p className="text-gray-400">No notes yet. Add your first note!</p>
       ) : (
-        /* Empty State */
-        <div className="text-center py-12 bg-[#1e1e1e] rounded-lg border border-[#333333]">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#f90026]/10 flex items-center justify-center">
-            <Plus className="h-8 w-8 text-[#f90026]" />
-          </div>
-          <h3 className="text-lg font-semibold mb-2">No Notes Yet</h3>
-          <p className="text-gray-400">Add your first note to get started</p>
+        <div className="space-y-4">
+          {filteredNotes.map((note) => (
+            <div
+              key={note.id}
+              className="p-4 bg-[#1e1e1e] rounded-lg border border-[#333333]"
+            >
+              <div className="flex justify-between items-start">
+                <p className="whitespace-pre-wrap">{note.content}</p>
+                <div className="flex space-x-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onPress={() => handleOpenModal(note.id, note.content)}
+                    isLoading={isUpdating}
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    color="danger"
+                    onPress={() => setDeletingNoteId(note.id)}
+                    isLoading={isDeleting && deletingNoteId === note.id}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Add/Edit Note Modal */}
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={handleCloseModal}
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+        <ModalContent>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <ModalHeader>
+              {editingNoteId ? "Edit Note" : "Add Note"}
+            </ModalHeader>
+            <ModalBody>
+              <Textarea
+                {...register("content", { required: true })}
+                placeholder="Write your note here..."
+                className="min-h-[200px]"
+              />
+            </ModalBody>
+            <ModalFooter>
+              <Button
+                type="button"
+                variant="ghost"
+                onPress={handleCloseModal}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                isLoading={isCreating || isUpdating}
+              >
+                {editingNoteId ? "Update" : "Save"}
+              </Button>
+            </ModalFooter>
+          </form>
+        </ModalContent>
+      </Modal>
+
+      <Modal
+        isOpen={!!deletingNoteId}
+        onClose={() => setDeletingNoteId(null)}
       >
         <ModalContent>
-          <ModalHeader className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">
-              {editingNoteId ? "Edit Note" : "Add Note"}
-            </h2>
-          </ModalHeader>
+          <ModalHeader>Delete Note</ModalHeader>
           <ModalBody>
-            <Textarea
-              value={noteContent}
-              onChange={(e) => setNoteContent(e.target.value)}
-              placeholder="Write your note here..."
-              disabled={isCreating || isUpdating}
-              isRequired={true}
-            />
+            <p>Are you sure you want to delete this note?</p>
           </ModalBody>
           <ModalFooter>
             <Button
               variant="ghost"
-              onPress={handleCloseModal}
-              className="mr-2"
-              disabled={isCreating || isUpdating}
+              onPress={() => setDeletingNoteId(null)}
             >
               Cancel
             </Button>
             <Button
-              color="primary"
-              onPress={handleSaveNote}
-              isLoading={isCreating || isUpdating}
-              disabled={!noteContent.trim() || isCreating || isUpdating}
+              color="danger"
+              onPress={() => deletingNoteId && handleDelete(deletingNoteId)}
+              isLoading={isDeleting}
             >
-              {editingNoteId ? "Update Note" : "Add Note"}
+              Delete
             </Button>
           </ModalFooter>
         </ModalContent>

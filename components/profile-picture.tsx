@@ -1,9 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { Button, Avatar, Spinner } from "@heroui/react"
 import { Camera } from "lucide-react"
-import { LoadingSpinner } from "@/components/loading-spinner"
 
 interface ProfilePictureProps {
   src: string | null
@@ -32,11 +31,18 @@ export default function ProfilePicture({ src, alt, onUploadClick, isLoading = fa
         onMouseLeave={() => setIsHovering(false)}
       >
         {src ? (
-          <img src={src || "/placeholder.svg"} alt={alt} className="w-full h-full object-cover" />
+          <Avatar
+            src={src}
+            alt={alt}
+            className="w-full h-full"
+            imgProps={{ className: "object-cover" }}
+          />
         ) : (
-          <div className="w-full h-full bg-muted flex items-center justify-center">
-            <span className="text-4xl font-semibold">{getInitials(alt)}</span>
-          </div>
+          <Avatar
+            name={alt}
+            className="w-full h-full bg-muted"
+            getInitials={getInitials}
+          />
         )}
 
         {isHovering && !isLoading && (
@@ -50,12 +56,18 @@ export default function ProfilePicture({ src, alt, onUploadClick, isLoading = fa
 
         {isLoading && (
           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <LoadingSpinner size="md" />
+            <Spinner size="md" />
           </div>
         )}
       </div>
 
-      <Button variant="outline" size="sm" onClick={onUploadClick} disabled={isLoading} className="mb-2">
+      <Button 
+        variant="bordered" 
+        size="sm" 
+        onPress={onUploadClick} 
+        isDisabled={isLoading} 
+        className="mb-2"
+      >
         {isLoading ? "Uploading..." : "Change Picture"}
       </Button>
     </div>

@@ -1,50 +1,53 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { ROLES } from "@/lib/types/roles"
+import { ROLES, isAdmin, isInstructor, type Role } from "@/lib/rbac/types"
 
 // This function can be marked `async` if using `await` inside
 export function middleware(request: NextRequest) {
-  // Get the pathname of the request (e.g. /, /admin, /instructor)
+  // Get the pathname of the request (e.g. /, /protected)
   const path = request.nextUrl.pathname
 
-  // Logging for debugging
-  console.log("[Middleware] Path:", path)
+  // Define public paths that don't require authentication
+  const isPublicPath = path === "/" || path === "/signin" || path === "/signup"
 
-  // Allow access to admin setup page without requiring admin role
-  if (path === "/admin/setup") {
-    console.log("[Middleware] Allowing /admin/setup without admin role.")
-    return NextResponse.next()
-  }
+  // Get the token from the cookies
+  const token = request.cookies.get("token")?.value || ""
 
   // Get the user roles from the cookie
   const userRolesCookie = request.cookies.get("user-roles")
-  let userRoles: string[] = []
+  let userRoles: Role[] = []
   try {
-    userRoles = userRolesCookie ? JSON.parse(userRolesCookie.value) : []
+    const parsedRoles = userRolesCookie ? JSON.parse(userRolesCookie.value) : []
+    // Validate that all roles are valid
+    userRoles = parsedRoles.filter((role: string) => 
+      Object.values(ROLES).includes(role as Role)
+    ) as Role[]
   } catch (e) {
     console.log("[Middleware] Failed to parse user-roles cookie:", userRolesCookie)
     userRoles = []
   }
 
   // Logging for debugging
-  console.log("[Middleware] userRolesCookie:", userRolesCookie)
+  console.log("[Middleware] Path:", path)
   console.log("[Middleware] userRoles:", userRoles)
 
-  // Check if user has admin role
-  const isAdmin = userRoles.includes(ROLES.ADMIN)
-  const isInstructor = userRoles.includes(ROLES.INSTRUCTOR)
-  console.log("[Middleware] isAdmin:", isAdmin, "isInstructor:", isInstructor)
-
-  // Protect admin routes
-  if (path.startsWith("/admin") && !isAdmin) {
-    console.log("[Middleware] Redirecting from /admin* to / because user is not admin.")
-    return NextResponse.redirect(new URL("/", request.url))
+  // Handle authentication
+  if (!token && !isPublicPath) {
+    // If no token and trying to access protected route, redirect to signin
+    return NextResponse.redirect(new URL("/signin", request.url))
   }
 
-  // Protect instructor routes
-  if (path.startsWith("/instructor") && !isInstructor && !isAdmin) {
-    console.log("[Middleware] Redirecting from /instructor* to / because user is not instructor or admin.")
-    return NextResponse.redirect(new URL("/", request.url))
+  // Handle role-based access control
+  if (token) {
+    // Protect admin routes
+    if (path.startsWith("/admin") && !isAdmin(userRoles)) {
+      return NextResponse.redirect(new URL("/dashboard", request.url))
+    }
+
+    // Protect instructor routes
+    if (path.startsWith("/instructor") && !isInstructor(userRoles)) {
+      return NextResponse.redirect(new URL("/dashboard", request.url))
+    }
   }
 
   console.log("[Middleware] Allowing request to proceed.")
@@ -53,5 +56,5 @@ export function middleware(request: NextRequest) {
 
 // See "Matching Paths" below to learn more
 export const config = {
-  matcher: ["/admin/:path*", "/instructor/:path*"],
+  matcher: ["/", "/dashboard/:path*", "/signin", "/signup", "/admin/:path*", "/instructor/:path*"],
 }

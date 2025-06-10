@@ -1,10 +1,43 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { getUserCourseProgress, updateLessonProgress } from "@/lib/firebase"
+import { doc, getDoc, updateDoc } from "firebase/firestore"
+import { db } from "@/lib/firebase/client"
+import { Progress, ProgressSchema } from "@/lib/types"
+import { addToast } from "@heroui/react"
+
+interface ProgressData {
+  [lessonId: string]: {
+    completed: boolean
+    lastAccessed?: Date
+  }
+}
+
+interface UpdateProgressParams {
+  userId: string
+  courseId: string
+  lessonId: string
+  completed: boolean
+}
 
 export function useCourseProgress(userId: string, courseId: string) {
-  return useQuery({
-    queryKey: ["progress", userId, courseId],
-    queryFn: () => getUserCourseProgress(userId, courseId),
+  return useQuery<Progress[]>({
+    queryKey: ["course-progress", userId, courseId],
+    queryFn: async () => {
+      if (!userId || !courseId) return []
+      const progressRef = doc(db, "users", userId, "progress", courseId)
+      const progressDoc = await getDoc(progressRef)
+      if (!progressDoc.exists()) return []
+      
+      const progressData = progressDoc.data() as ProgressData
+      return Object.entries(progressData).map(([lessonId, data]) => 
+        ProgressSchema.parse({
+          userId,
+          courseId,
+          lessonId,
+          completed: data.completed,
+          lastAccessed: data.lastAccessed?.toISOString() || new Date().toISOString()
+        })
+      )
+    },
     enabled: !!userId && !!courseId
   })
 }
@@ -12,39 +45,47 @@ export function useCourseProgress(userId: string, courseId: string) {
 export function useProgressMutations() {
   const queryClient = useQueryClient()
 
-  const updateProgressMutation = useMutation({
-    mutationFn: ({ 
-      userId, 
-      courseId, 
-      lessonId, 
-      completed 
-    }: { 
-      userId: string
-      courseId: string
-      lessonId: string
-      completed: boolean 
-    }) => updateLessonProgress(userId, courseId, lessonId, completed),
-    onMutate: async ({ userId, courseId, lessonId, completed }) => {
-      await queryClient.cancelQueries({ queryKey: ["progress", userId, courseId] })
-      const previous = queryClient.getQueryData(["progress", userId, courseId])
-      queryClient.setQueryData(["progress", userId, courseId], (old: any) => ({
-        ...old,
-        [lessonId]: { completed },
-      }))
-      return { previous }
-    },
-    onError: (err, variables, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(["progress", variables.userId, variables.courseId], context.previous)
+  const updateProgress = useMutation({
+    mutationFn: async ({ userId, courseId, lessonId, completed }: UpdateProgressParams) => {
+      const progressRef = doc(db, "users", userId, "progress", courseId)
+      const progressDoc = await getDoc(progressRef)
+      
+      const currentProgress = progressDoc.exists() 
+        ? progressDoc.data() as ProgressData 
+        : {}
+
+      const progress = {
+        [lessonId]: {
+          completed,
+          lastAccessed: new Date()
+        },
+        ...currentProgress
       }
+
+      await updateDoc(progressRef, progress)
     },
     onSuccess: (_, { userId, courseId }) => {
-      queryClient.invalidateQueries({ queryKey: ["progress", userId, courseId] })
+      queryClient.invalidateQueries({ queryKey: ["course-progress", userId, courseId] })
+      addToast({
+        title: "Success",
+        description: "Progress updated successfully",
+        timeout: 3000,
+        shouldShowTimeoutProgress: true
+      })
+    },
+    onError: (error) => {
+      console.error("Error updating progress:", error)
+      addToast({
+        title: "Error",
+        description: "Failed to update progress. Please try again.",
+        timeout: 3000,
+        shouldShowTimeoutProgress: true
+      })
     }
   })
 
   return {
-    updateProgress: updateProgressMutation.mutate,
-    isUpdating: updateProgressMutation.isPending
+    updateProgress: updateProgress.mutate,
+    isUpdating: updateProgress.isPending
   }
 } 

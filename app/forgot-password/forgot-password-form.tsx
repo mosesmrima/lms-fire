@@ -3,9 +3,8 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Button, Input, addToast } from "@heroui/react"
-import { LoadingSpinner } from "@/components/loading-spinner"
-import { sendPasswordResetRequest } from "@/lib/firebase"
+import { Button, Input, addToast, Spinner } from "@heroui/react"
+import { sendPasswordResetRequest } from "@/lib/firebase/client"
 import { ArrowLeft, CheckCircle } from "lucide-react"
 import Link from "next/link"
 
@@ -54,9 +53,9 @@ export function ForgotPasswordForm() {
         <div className="space-y-4">
           <Button
             type="button"
-            variant="outline"
+            variant="bordered"
             className="w-full border-[#333333] hover:bg-[#222222]"
-            onClick={() => {
+            onPress={() => {
               setIsSuccess(false)
               setEmail("")
             }}
@@ -102,7 +101,7 @@ export function ForgotPasswordForm() {
           className="w-full bg-[#f90026] hover:bg-[#d10021]"
           disabled={isSubmitting}
         >
-          {isSubmitting ? <LoadingSpinner size="sm" /> : "Send Reset Link"}
+          {isSubmitting ? <Spinner size="sm" /> : "Send Reset Link"}
         </Button>
         <div className="text-center mt-4">
           <Link

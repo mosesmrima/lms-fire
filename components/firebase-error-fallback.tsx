@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@heroui/react"
 import { useEffect, useState } from "react"
 
 interface FirebaseErrorFallbackProps {
@@ -43,7 +43,7 @@ export function FirebaseErrorFallback({ error, resetErrorBoundary }: FirebaseErr
             <p className="text-red-400 text-sm font-mono">{error.message}</p>
           </div>
         )}
-        <Button onClick={handleRetry} className="bg-[#f90026] hover:bg-[#d10021]">
+        <Button onPress={handleRetry} className="bg-[#f90026] hover:bg-[#d10021]">
           Try Again
         </Button>
         <p className="mt-4 text-sm text-gray-400">

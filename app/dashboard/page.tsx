@@ -2,16 +2,16 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Card, CardBody, CardHeader, addToast } from "@heroui/react"
+import { Card, CardBody, CardHeader, addToast, Spinner } from "@heroui/react"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useCourses } from "@/hooks/queries/use-courses"
 import { useCourseProgress } from "@/hooks/queries/use-progress"
 import { EnrolledCoursesList } from "@/components/enrolled-courses-list"
-import { LoadingSpinner } from "@/components/loading-spinner"
+import { ROLES } from "@/lib/rbac/types"
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { user, loading: authLoading } = useAuthStore()
+  const { user, loading: authLoading, roles } = useAuthStore()
   const { data: courses, isLoading: coursesLoading } = useCourses()
   const { data: progress } = useCourseProgress(user?.uid || "", courses?.map(c => c.id).join(",") || "")
 
@@ -23,12 +23,13 @@ export default function DashboardPage() {
         timeout: 3000,
         shouldShowTimeoutProgress: true
       })
-      router.push("/login")
+      router.push("/signin")
+      return
     }
   }, [user, authLoading, router])
 
   if (authLoading || coursesLoading) {
-    return <LoadingSpinner />
+    return <Spinner />
   }
 
   if (!user) {

@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Button, Input, addToast } from "@heroui/react"
-import { LoadingSpinner } from "@/components/loading-spinner"
+import { Button, Input, addToast, Spinner } from "@heroui/react"
+
 import { ArrowLeft, CheckCircle, Eye, EyeOff, AlertTriangle } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { usePasswordResetMutations } from "@/lib/services/auth-service"
+import { usePasswordResetMutations } from "@/lib/services/auth"
 
 interface ResetPasswordFormProps {
   oobCode?: string
@@ -104,7 +104,7 @@ export function ResetPasswordForm({ oobCode }: ResetPasswordFormProps) {
   if (isVerifying) {
     return (
       <div className="bg-[#111111] border border-[#333333] rounded-lg p-6 flex flex-col items-center justify-center min-h-[300px]">
-        <LoadingSpinner size="lg" />
+        <Spinner size="lg" />
         <p className="mt-4 text-gray-400">Verifying your reset link...</p>
       </div>
     )

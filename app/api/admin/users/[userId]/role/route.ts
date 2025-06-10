@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { initFirebaseAdmin } from "@/lib/firebase/firebase-admin-init"
-import { ROLES } from "@/lib/roles"
+import { adminAuth } from "@/lib/firebase/admin"
+import { ROLES } from "@/lib/rbac"
 
 export async function PUT(
   request: Request,
@@ -8,7 +8,7 @@ export async function PUT(
 ) {
   try {
     const { userId } = await params
-    const { auth } = initFirebaseAdmin()
+    const { auth } = adminAuth()
     const { role, action } = await request.json()
 
     // Validate role

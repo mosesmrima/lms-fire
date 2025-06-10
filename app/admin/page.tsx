@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import { AdminClientPage } from "./admin-client"
-import { LoadingSpinner } from "@/components/loading-spinner"
+import { Spinner } from "@heroui/react"
 
 export const metadata = {
   title: "Admin Dashboard | AfricaHackon LMS",
@@ -13,7 +13,7 @@ export default function AdminPage() {
       <Suspense
         fallback={
           <div className="flex justify-center items-center min-h-[60vh]">
-            <LoadingSpinner size="lg" />
+            <Spinner size="lg" />
           </div>
         }
       >

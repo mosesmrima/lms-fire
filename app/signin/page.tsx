@@ -2,31 +2,45 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Card, CardHeader, CardBody, CardFooter, Input, Button, Link, Divider } from "@heroui/react"
+import { Card, CardHeader, CardBody, CardFooter, Form, Input, Button, Link, Divider } from "@heroui/react"
 import { useAuthStore } from "@/lib/stores/auth-store"
-import { useToast } from "@/components/ui/use-toast"
+import { AuthUser } from "@/lib/types"
+import { ROLES } from "@/lib/rbac/types"
 
 export default function SignIn() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const router = useRouter()
-  const { signIn, signInWithGoogle } = useAuthStore()
-  const { toast } = useToast()
+  const { signIn, signInWithGoogle, isAdmin, isInstructor } = useAuthStore()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRoleBasedRedirect = (user: AuthUser) => {
+    if (!user.roles) return
+
+    if (isAdmin()) {
+      router.push("/admin")
+    } else if (isInstructor()) {
+      router.push("/instructor")
+    } else {
+      router.push("/dashboard")
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
+    setErrors({})
+
+    const formData = new FormData(e.currentTarget)
+    const email = formData.get("email") as string
+    const password = formData.get("password") as string
 
     try {
-      await signIn(email, password)
-      router.push("/dashboard")
+      const user = await signIn(email, password)
+      handleRoleBasedRedirect(user)
     } catch (error: any) {
       console.error("Sign in error:", error)
-      toast({
-        title: "Error",
-        description: error.message || "Failed to sign in. Please try again.",
-        variant: "destructive",
+      setErrors({
+        email: error.message || "Failed to sign in. Please try again."
       })
     } finally {
       setIsLoading(false)
@@ -36,14 +50,12 @@ export default function SignIn() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
     try {
-      await signInWithGoogle()
-      router.push("/dashboard")
+      const user = await signInWithGoogle()
+      handleRoleBasedRedirect(user)
     } catch (error: any) {
       console.error("Google sign in error:", error)
-      toast({
-        title: "Error",
-        description: error.message || "Failed to sign in with Google. Please try again.",
-        variant: "destructive",
+      setErrors({
+        email: error.message || "Failed to sign in with Google. Please try again."
       })
     } finally {
       setIsLoading(false)
@@ -58,23 +70,29 @@ export default function SignIn() {
           <p className="text-gray-400">Sign in to your account</p>
         </CardHeader>
         <CardBody className="flex flex-col gap-4">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <Form
+            onSubmit={handleSubmit}
+            className="flex flex-col gap-4"
+            validationErrors={errors}
+          >
             <Input
               type="email"
               label="Email"
+              name="email"
               placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              isRequired
+              errorMessage="Please enter a valid email"
+              labelPlacement="outside"
               className="bg-[#2a2a2a] border-[#333333] text-white"
             />
             <Input
               type="password"
               label="Password"
+              name="password"
               placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              isRequired
+              errorMessage="Password is required"
+              labelPlacement="outside"
               className="bg-[#2a2a2a] border-[#333333] text-white"
             />
             <Button
@@ -85,7 +103,7 @@ export default function SignIn() {
             >
               Sign In
             </Button>
-          </form>
+          </Form>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -99,7 +117,7 @@ export default function SignIn() {
           <Button
             variant="bordered"
             className="w-full border-[#333333] hover:border-[#f90026]"
-            onClick={handleGoogleSignIn}
+            onPress={handleGoogleSignIn}
             isLoading={isLoading}
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">

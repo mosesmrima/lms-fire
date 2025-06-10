@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { isUserEnrolledInCourse, enrollUserInCourse, unenrollUserFromCourse } from "@/lib/firebase"
+import { isUserEnrolledInCourse, enrollUserInCourse, unenrollUserFromCourse } from "@/lib/firebase/client"
 
 export function useEnrollmentStatus(userId: string, courseId: string) {
   return useQuery({

@@ -1,43 +1,20 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Button } from "@heroui/react"
-import { useAuthStore } from "@/lib/stores/auth-store"
 import { useRouter } from "next/navigation"
-import { toast } from "@/components/ui/use-toast"
-import { enrollUserInCourse, unenrollUserFromCourse, isUserEnrolledInCourse } from "@/lib/firebase"
+import { Button, addToast } from "@heroui/react"
+import { useAuthStore } from "@/lib/stores/auth-store"
+import { useEnrollmentStatus, useEnrollmentMutations } from "@/hooks/queries/use-enrollment"
 
 interface EnrollButtonProps {
   courseId: string
-  isEnrolled?: boolean
-  isCheckingEnrollment?: boolean
   className?: string
 }
 
-export function EnrollButton({
-  courseId,
-  isEnrolled = false,
-  isCheckingEnrollment = false,
-  className = "",
-}: EnrollButtonProps) {
-  const [enrolled, setEnrolled] = useState(isEnrolled)
-  const [loading, setLoading] = useState(false)
-  const { user } = useAuthStore()
+export function EnrollButton({ courseId, className = "" }: EnrollButtonProps) {
   const router = useRouter()
-
-  // Verify enrollment status on mount and when user changes
-  useEffect(() => {
-    const verifyEnrollment = async () => {
-      if (!user) return
-      try {
-        const isEnrolled = await isUserEnrolledInCourse(user.uid, courseId)
-        setEnrolled(isEnrolled)
-      } catch (error) {
-        console.error("Error verifying enrollment:", error)
-      }
-    }
-    verifyEnrollment()
-  }, [user, courseId])
+  const { user } = useAuthStore()
+  const { data: isEnrolled, isLoading: isCheckingEnrollment } = useEnrollmentStatus(user?.uid || "", courseId)
+  const { enroll, unenroll, isEnrolling, isUnenrolling } = useEnrollmentMutations()
 
   const handleEnrollment = async () => {
     if (!user) {
@@ -45,50 +22,50 @@ export function EnrollButton({
       return
     }
 
-    setLoading(true)
-
     try {
-      if (enrolled) {
-        await unenrollUserFromCourse(user.uid, courseId)
-        setEnrolled(false)
-        toast({
+      if (isEnrolled) {
+        await unenroll({ userId: user.uid, courseId })
+        addToast({
           title: "Success",
           description: "Successfully unenrolled from the course.",
+          color: "success",
+          timeout: 5000,
+          shouldShowTimeoutProgress: true
         })
       } else {
-        const success = await enrollUserInCourse(user.uid, courseId)
-        if (success) {
-          setEnrolled(true)
-          toast({
-            title: "Success",
-            description: "Successfully enrolled in the course.",
-          })
-          router.push(`/courses/${courseId}`)
-        }
+        await enroll({ userId: user.uid, courseId })
+        addToast({
+          title: "Success",
+          description: "Successfully enrolled in the course.",
+          color: "success",
+          timeout: 5000,
+          shouldShowTimeoutProgress: true
+        })
+        router.push(`/courses/${courseId}`)
       }
     } catch (error) {
       console.error("Error handling enrollment:", error)
-      toast({
+      addToast({
         title: "Error",
         description: "Failed to process enrollment. Please try again.",
-        variant: "destructive",
+        color: "danger",
+        timeout: 5000,
+        shouldShowTimeoutProgress: true
       })
-    } finally {
-      setLoading(false)
     }
+  }
+
+  if (isCheckingEnrollment) {
+    return <Button isLoading className={className} />
   }
 
   return (
     <Button
-      onClick={handleEnrollment}
-      isDisabled={loading || isCheckingEnrollment}
-      color={enrolled ? "default" : "primary"}
-      variant="flat"
+      onPress={handleEnrollment}
+      isLoading={isEnrolling || isUnenrolling}
       className={className}
-      size="lg"
-      fullWidth
     >
-      {loading || isCheckingEnrollment ? "Processing..." : enrolled ? "Unenroll from Course" : "Enroll in Course"}
+      {isEnrolled ? "Unenroll" : "Enroll Now"}
     </Button>
   )
 }

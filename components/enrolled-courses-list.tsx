@@ -1,10 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Card, CardBody, CardFooter, Spinner, Button} from "@heroui/react"
 import { useAuthStore } from "@/lib/stores/auth-store"
-import { LoadingSpinner } from "@/components/loading-spinner"
 import { useCourses } from "@/hooks/queries/use-courses"
 import { useEnrollmentStatus } from "@/hooks/queries/use-enrollment"
 import { useCourseProgress } from "@/hooks/queries/use-progress"
@@ -27,7 +25,7 @@ export function EnrolledCoursesList() {
   if (authLoading || coursesLoading) {
     return (
       <div className="flex justify-center items-center py-8 sm:py-12">
-        <LoadingSpinner />
+        <Spinner />
       </div>
     )
   }
@@ -48,7 +46,7 @@ export function EnrolledCoursesList() {
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {courses.map((course) => (
         <Card key={course.id}>
-          <CardContent>
+          <CardBody>
             <h3 className="text-lg font-semibold mb-2">{course.title}</h3>
             <p className="text-gray-400 text-sm mb-4">{course.description}</p>
             <div className="w-full bg-gray-700 rounded-full h-2.5">
@@ -60,13 +58,13 @@ export function EnrolledCoursesList() {
             <p className="text-sm text-gray-400 mt-2">
               {calculateProgress(course.id)}% Complete
             </p>
-            </CardContent>
+          </CardBody>
           <CardFooter>
             <Button asChild className="w-full">
               <Link href={`/courses/${course.id}`}>Continue Learning</Link>
-              </Button>
-            </CardFooter>
-          </Card>
+            </Button>
+          </CardFooter>
+        </Card>
       ))}
     </div>
   )

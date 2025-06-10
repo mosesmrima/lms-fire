@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/firebase"
-import { getUserEnrollments } from "@/lib/firebase"
+import { auth } from "@/lib/firebase/client"
+import { getUserEnrollments } from "@/lib/firebase/client"
 
 export async function POST(request: NextRequest) {
   try {

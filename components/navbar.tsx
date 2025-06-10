@@ -22,13 +22,15 @@ import { usePathname, useRouter } from "next/navigation"
 import NextLink from "next/link"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { User, Settings, LogOut, BookOpen, LayoutDashboard, ChevronDown, Shield } from "lucide-react"
+import Image from "next/image"
+import logo from "@/public/logo.png"
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
-  const { user, roles, loading, signOut, isAdmin, isInstructor } = useAuthStore()
+  const { user, roles = [], loading, signOut, isAdmin, isInstructor } = useAuthStore()
 
   // Only run auth-dependent code after component is mounted on the client
   useEffect(() => {
@@ -92,17 +94,16 @@ export function Navbar() {
       className="bg-[#111111] border-b border-[#333333] z-50"
     >
       <NavbarContent>
-        <NavbarMenuToggle aria-label={isMenuOpen ? "Close menu" : "Open menu"} className="md:hidden text-white" />
+        <NavbarMenuToggle 
+          aria-label={isMenuOpen ? "Close menu" : "Open menu"} 
+          className="sm:hidden text-white" 
+        />
         <NavbarBrand>
-          <NextLink href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-white">
-              <span className="text-[#f90026]">Africa</span>Hackon
-            </span>
-          </NextLink>
+          <Image src={logo} alt="logo" width={100} height={100} />
         </NavbarBrand>
       </NavbarContent>
 
-      <NavbarContent className="hidden md:flex gap-6" justify="center">
+      <NavbarContent className="hidden sm:flex gap-4" justify="center">
         {filteredRoutes.map((route) => (
           <NavbarItem key={route.href} isActive={pathname === route.href}>
             <Link
@@ -126,7 +127,7 @@ export function Navbar() {
         ) : user ? (
           // Show user menu when authenticated
           <NavbarItem>
-            <Dropdown>
+            <Dropdown placement="bottom-end">
               <DropdownTrigger>
                 <Button
                   variant="bordered"
@@ -143,14 +144,14 @@ export function Navbar() {
                   <span className="hidden sm:inline max-w-[100px] truncate">
                     {user.email?.split("@")[0] || "Account"}
                   </span>
-                  {roles[0] && (
+                  {roles && roles.length > 0 && (
                     <Badge color="primary" variant="flat" className="hidden sm:flex">
                       {roles[0].charAt(0).toUpperCase() + roles[0].slice(1)}
                     </Badge>
                   )}
                 </Button>
               </DropdownTrigger>
-              <DropdownMenu aria-label="User menu">
+              <DropdownMenu aria-label="User menu" className="p-0">
                 <DropdownItem
                   key="profile"
                   as={NextLink}
@@ -179,7 +180,7 @@ export function Navbar() {
                 >
                   Courses
                 </DropdownItem>
-                {(isInstructor || isAdmin) ? (
+                {(isInstructor || isAdmin) && (
                   <DropdownItem
                     key="instructor"
                     as={NextLink}
@@ -189,8 +190,8 @@ export function Navbar() {
                   >
                     Instructor Dashboard
                   </DropdownItem>
-                ) : null}
-                {isAdmin ? (
+                )}
+                {isAdmin && (
                   <DropdownItem
                     key="admin"
                     as={NextLink}
@@ -200,99 +201,69 @@ export function Navbar() {
                   >
                     Admin Dashboard
                   </DropdownItem>
-                ) : null}
+                )}
                 <DropdownItem
                   key="logout"
-                  onClick={handleLogout}
-                  className="text-[#f90026]"
+                  onPress={handleLogout}
                   startContent={<LogOut className="h-4 w-4" />}
-                  description="Sign out of your account"
+                  className="text-danger"
+                  color="danger"
                 >
-                  Logout
+                  Log Out
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>
           </NavbarItem>
         ) : (
-          // Show sign in/up buttons when not authenticated
-          <>
-            <NavbarItem className="hidden sm:flex">
-              <Link as={NextLink} href="/signin">
-                <Button variant="bordered" className="border-[#333333] hover:border-[#f90026]">
-                  Sign In
-                </Button>
-              </Link>
-            </NavbarItem>
-            <NavbarItem>
-              <Link as={NextLink} href="/signup">
-                <Button className="px-3 sm:px-4">
-                  Sign Up
-                </Button>
-              </Link>
-            </NavbarItem>
-          </>
+          // Show sign in button when not authenticated
+          <NavbarItem>
+            <Button
+              as={NextLink}
+              href="/signin"
+              className="text-white"
+            >
+              Sign In
+            </Button>
+          </NavbarItem>
         )}
       </NavbarContent>
 
-      <NavbarMenu className="bg-[#111111] pt-6 px-4">
+      <NavbarMenu>
         {filteredRoutes.map((route) => (
           <NavbarMenuItem key={route.href}>
             <Link
               as={NextLink}
               href={route.href}
               color={pathname === route.href ? "primary" : "foreground"}
-              className={`text-lg font-medium ${pathname === route.href ? "text-[#f90026]" : "text-gray-300"} block py-2`}
-              onClick={() => setIsMenuOpen(false)}
+              className={`text-sm font-medium ${pathname === route.href ? "text-[#f90026]" : "text-gray-300"}`}
             >
               {route.label}
             </Link>
           </NavbarMenuItem>
         ))}
-        {mounted && !loading && user && (
+        {user && (
           <>
             <NavbarMenuItem>
               <Link
                 as={NextLink}
                 href="/profile"
-                color={pathname === "/profile" ? "primary" : "foreground"}
-                className={`text-lg font-medium ${pathname === "/profile" ? "text-[#f90026]" : "text-gray-300"} block py-2 flex items-center gap-2`}
-                onClick={() => setIsMenuOpen(false)}
+                color="foreground"
+                className="text-sm font-medium text-gray-300"
               >
-                <User className="h-4 w-4" />
                 Profile
               </Link>
             </NavbarMenuItem>
-            <div className="flex flex-col gap-2 mt-4">
-              <Button 
-                onPress={handleLogout} 
-                variant="bordered" 
-                className="w-full border-[#333333] text-[#f90026] hover:border-[#f90026]"
+            <NavbarMenuItem>
+              <Button
+                onPress={handleLogout}
+                color="danger"
+                variant="light"
+                className="w-full justify-start"
               >
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
+                Log Out
               </Button>
-            </div>
+            </NavbarMenuItem>
           </>
-        )}
-        {mounted && !loading && !user && (
-          <div className="flex flex-col gap-2 mt-4">
-            <Button 
-              as={NextLink} 
-              href="/signin" 
-              variant="bordered" 
-              className="w-full border-[#333333] hover:border-[#f90026]"
-            >
-              Sign In
-            </Button>
-            <Button 
-              as={NextLink} 
-              href="/signup" 
-              color="primary" 
-              className="w-full"
-            >
-              Sign Up
-            </Button>
-          </div>
         )}
       </NavbarMenu>
     </HeroNavbar>

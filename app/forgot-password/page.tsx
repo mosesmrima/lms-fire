@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import { ForgotPasswordForm } from "./forgot-password-form"
-import { LoadingSpinner } from "@/components/loading-spinner"
+import { Spinner } from "@heroui/react"
 
 export default function ForgotPasswordPage() {
   return (
@@ -14,7 +14,7 @@ export default function ForgotPasswordPage() {
         <Suspense
           fallback={
             <div className="flex justify-center items-center min-h-[200px]">
-              <LoadingSpinner size="lg" />
+              <Spinner size="lg" />
             </div>
           }
         >

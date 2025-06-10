@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
-import { initFirebaseAdmin } from "@/lib/firebase/firebase-admin-init"
+import { adminAuth, adminDb } from "@/lib/firebase/admin"
 
 export async function GET() {
   try {
-    const { auth } = initFirebaseAdmin()
+    const { auth } = adminAuth()
     
     // Get all users
     const listUsersResult = await auth.listUsers(1000)

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { initFirebaseAdmin } from "../../_lib/firebase-admin"
-import { ROLES, type Role } from "@/lib/constants"
+import { ROLES, type Role } from "@/lib/rbac"
 
 export async function GET(request: Request) {
   try {

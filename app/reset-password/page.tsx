@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import { ResetPasswordForm } from "./reset-password-form"
-import { LoadingSpinner } from "@/components/loading-spinner"
+import { Spinner } from "@heroui/react"
 
 export default async function ResetPasswordPage(
   props: {
@@ -21,7 +21,7 @@ export default async function ResetPasswordPage(
         <Suspense
           fallback={
             <div className="flex justify-center items-center min-h-[200px]">
-              <LoadingSpinner size="lg" />
+              <Spinner size="lg" />
             </div>
           }
         >

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { initFirebaseAdmin } from "@/lib/firebase/firebase-admin-init"
+import { adminAuth, adminDb } from "@/lib/firebase/admin"
 import { isAdmin } from "@/lib/auth-utils"
 
 
 export async function GET() {
   try {
-    const { auth } = initFirebaseAdmin()
+    const { auth } = adminAuth()
     
     // Get all users
     const listUsersResult = await auth.listUsers(1000)
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialize Firebase Admin
-    const { auth } = initFirebaseAdmin()
+    const { auth } = adminAuth()
 
     // Create user
     const userRecord = await auth.createUser({

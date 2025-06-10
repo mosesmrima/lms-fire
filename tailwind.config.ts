@@ -19,7 +19,7 @@ const config = {
         dark: {
           colors: {
             // primary: "#f90026",
-            background: "#111111",
+            //background: "#111111",
             // content1: "#1e1e1e",
             focus: "#f90026",
             default: "#f90026",

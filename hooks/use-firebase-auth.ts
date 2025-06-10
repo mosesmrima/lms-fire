@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { onAuthStateChange, getUserProfile } from "@/lib/firebase"
-import type { User } from "firebase/auth"
+import { User } from "firebase/auth"
+import { onAuthStateChange, getUserProfile } from "@/lib/firebase/client"
 import { setCookie, removeCookie } from "@/lib/cookies"
 
 export function useFirebaseAuth() {

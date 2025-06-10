@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { getCourse, updateLesson } from "@/lib/firebase"
+import { getCourse, updateLesson } from "@/lib/firebase/client"
 import type { Course, Lesson, Timestamp } from "@/lib/types"
 
 export function useLesson(courseId: string, lessonId: string) {

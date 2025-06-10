@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { ROLES } from "@/lib/types/roles"
+import { ROLES } from "@/lib/rbac"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -83,4 +83,16 @@ export function getRoleLabel(role: string) {
     default:
       return role
   }
+}
+
+export function isAdmin(roles: string[]): boolean {
+  return roles.includes(ROLES.ADMIN)
+}
+
+export function isInstructor(roles: string[]): boolean {
+  return roles.includes(ROLES.INSTRUCTOR)
+}
+
+export function isStudent(roles: string[]): boolean {
+  return roles.includes(ROLES.STUDENT)
 }
